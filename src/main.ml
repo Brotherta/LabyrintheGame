@@ -114,19 +114,41 @@ let trace_pourtour upleftx uplefty taille_case l h =
   Graphics.lineto (upleftx) (uplefty - taille_case)
 ;;
 
+let trace_mur upleftx uplefty taille_case (d,x,y) = 
+  if d = 0 then begin
+    Graphics.moveto (upleftx + (x+1)*taille_case) (uplefty - y*taille_case);
+    Graphics.lineto (upleftx + (x+1)*taille_case) (uplefty - y*taille_case - taille_case)
+  end
+  else begin
+    Graphics.moveto (upleftx + x*taille_case) (uplefty - (x+1)*taille_case);
+    Graphics.lineto (upleftx + x*taille_case + taille_case) (uplefty - (x+1)*taille_case)
+  end
 
-
+let trace_lab upleftx uplefty taille_case l h mur_present = 
+  for i = 0 to 1 do
+    for j = 0 to l-1 do
+      for k = 0 to h-1 do
+        if mur_present.(i).(j).(k) then begin
+          printf "(%d,%d,%d)" i j k;
+        trace_mur upleftx uplefty taille_case (i,j,k) end
+      done
+    done
+  done
+;;
 
 let () =
   (* trace_pourtour  *)
   let margin = 20 in
   let upleftx = margin in
   let uplefty = 700 - margin in
-  let l = 5 in
-  let h = 5 in
+  let l = 10 in
+  let h = 10 in
+  let mur_present = generate_lab l h in
+  
   let taille_case = ((700 - 2* margin)/ l) in
 
   trace_pourtour upleftx uplefty taille_case l h;
+  trace_lab upleftx uplefty taille_case l h mur_present;
   ignore @@ Graphics.read_key ()
 ;;
 (* let trace_lab upleftx uplefty taille_case l h mur_present = *)
