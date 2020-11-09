@@ -28,7 +28,6 @@ module  UF =
         parent
       end
 
-    
     let union uf n m = 
       let np = find uf n in  (* Parent de n *)
       let mp = find uf m in  (* Parent de n *)
@@ -58,6 +57,7 @@ open Format
 
 (* Tire un mur aléatoire, et renvoie (d,x y) ou d = 0 ou 1 (0 pour vertical et 1 pour horizontal x colonne et y lignes. *)                    
 let mur_au_hasard l h = 
+  let _ = Random.self_init() in
   let n = Random.int ((l-1)*h + l*(h-1)) in (* nombre de mur total*)
   if n < (l-1) * h then
     (0, n mod (l-1), n / (l-1))
@@ -86,7 +86,6 @@ let generate_lab l h =
   let test = ref (l*h) in
 
   while acc < test do
-    printf "(acc %d)" !acc;
     let (d,x,y) = mur_au_hasard l h in
     let (i,j) = cases_adjacentes l h (d,x,y) in 
 
@@ -104,7 +103,7 @@ let generate_lab l h =
 ;;
 
 #load "graphics.cma";;
-Graphics.open_graph " 700x700";;
+Graphics.open_graph " 1000x1000";;
 
 let trace_pourtour upleftx uplefty taille_case l h = 
   Graphics.moveto upleftx uplefty;
@@ -125,25 +124,26 @@ let trace_mur upleftx uplefty taille_case (d,x,y) =
     Graphics.lineto (upleftx + x*taille_case + taille_case) (uplefty - (y+1)*taille_case)
   end
 
-  let trace_lab upleftx uplefty taille_case l h mur_present = 
-    for d = 0 to 1 do
-      for x = 0 to l-1 do
-        for y = 0 to h-1 do
-          if mur_present.(d).(x).(y) then begin
-            trace_mur upleftx uplefty taille_case (d,x,y)
-          end
-        done
+let trace_lab upleftx uplefty taille_case l h mur_present = 
+  for d = 0 to 1 do
+    for x = 0 to l-1 do
+      for y = 0 to h-1 do
+        if mur_present.(d).(x).(y) then begin
+          trace_mur upleftx uplefty taille_case (d,x,y)
+        end
       done
     done
-  ;;
+  done
+;;
+
 
 let () =
   (* trace_pourtour  *)
   let margin = 20 in
   let upleftx = margin in
-  let uplefty = 700 - margin in
-  let l = 20 in
-  let h = 20 in
+  let uplefty = 1000 - margin in
+  let l = 500 in
+  let h = 500 in
   let mur_present = generate_lab l h in
   
   let taille_case = ((700 - 2* margin)/ l) in
@@ -153,5 +153,4 @@ let () =
   trace_lab upleftx uplefty taille_case l h mur_present;
   ignore @@ Graphics.read_key ()
 ;;
-(* let trace_lab upleftx uplefty taille_case l h mur_present = *)
-  
+

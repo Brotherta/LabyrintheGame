@@ -206,3 +206,5 @@ let c = trace_mur upleftx uplefty taille_case (1,1,0);;
 
 true false true    false false false    true true false
 false false true   true false true      false true true
+
+let c = Random.init 
