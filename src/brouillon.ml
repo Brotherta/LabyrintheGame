@@ -4,6 +4,7 @@
 (***********************************************************************************************)
 (***********************************************************************************************)
 
+
 module type UF = 
   sig
     type t 
@@ -13,21 +14,30 @@ module type UF =
   end
 ;;
 
+
 module  UF = 
   struct 
     type t = {parent : int array; rang : int array}
 
     let create n = {parent = Array.init n (fun i -> i); rang = Array.init n (fun _-> 0)} 
 
-    let rec find uf n =           (* On cherche le parent le plus haut de n *)
+    (* let rec find uf n =           (* On cherche le parent le plus haut de n *)
       if uf.parent.(n) = n then   (* On applique la compression des chemins pour applatir l'arbre.*)
         uf.parent.(n)
       else begin
         let parent = find uf uf.parent.(n) in
         uf.parent.(n) <- parent; 
         parent
+      end *)
+    
+    let rec find uf n = 
+      if uf.parent.(n) <> n then begin
+        uf.parent.(n) <- find uf uf.parent.(n);
+        uf.parent.(n)
       end
-
+      else
+        uf.parent.(n)
+    ;;
     
     let union uf n m = 
       let np = find uf n in  (* Parent de n *)
@@ -65,7 +75,6 @@ let mur_au_hasard l h =
     (1, n2 mod l, n2 / l)
 ;;
 
-mur_au_hasard 2 2;;
 
 let cases_adjacentes l h (d,x,y) = 
   if d = 0 then (* vertical *)
@@ -121,37 +130,79 @@ let trace_mur upleftx uplefty taille_case (d,x,y) =
     Graphics.lineto (upleftx + (x+1)*taille_case) (uplefty - y*taille_case - taille_case)
   end
   else begin
+    (* printf "d:%d x:%d y:%d ?:%d" d x y (uplefty - (y+1)*taille_case); *)
     Graphics.moveto (upleftx + x*taille_case) (uplefty - (y+1)*taille_case);
     Graphics.lineto (upleftx + x*taille_case + taille_case) (uplefty - (y+1)*taille_case)
   end
 
-  let trace_lab upleftx uplefty taille_case l h mur_present = 
-    for d = 0 to 1 do
-      for x = 0 to l-1 do
-        for y = 0 to h-1 do
-          if mur_present.(d).(x).(y) then begin
-            trace_mur upleftx uplefty taille_case (d,x,y)
-          end
-        done
+let trace_lab upleftx uplefty taille_case l h mur_present = 
+  printf "\n";
+  for d = 0 to 1 do
+    for x = 0 to l-1 do
+      for y = 0 to h-1 do
+        (* printf "(%d,%d,%d) " d x y; *)
+        (* print_bool mur_present.(d).(x).(y); *)
+        (* printf " "; *)
+        if mur_present.(d).(x).(y) then begin
+          (* printf "(%d,%d,%d)\n" d x y; *)
+          trace_mur upleftx uplefty taille_case (d,x,y)
+        end
       done
     done
-  ;;
-
-let () =
-  (* trace_pourtour  *)
-  let margin = 20 in
-  let upleftx = margin in
-  let uplefty = 700 - margin in
-  let l = 20 in
-  let h = 20 in
-  let mur_present = generate_lab l h in
-  
-  let taille_case = ((700 - 2* margin)/ l) in
-
-  trace_pourtour upleftx uplefty taille_case l h;
-  (* trace_mur upleftx uplefty taille_case (1,2,2); *)
-  trace_lab upleftx uplefty taille_case l h mur_present;
-  ignore @@ Graphics.read_key ()
+  done
 ;;
-(* let trace_lab upleftx uplefty taille_case l h mur_present = *)
-  
+
+generate_lab 3 3;;
+
+
+
+
+;;
+let (d,x,y) = mur_au_hasard 3 3;;
+let (i,j) = cases_adjacentes 3 3(d,x,y);;
+;;
+
+
+
+let margin = 20;;
+let upleftx = margin;;
+let uplefty = 700 - margin ;;
+let l = 5 ;;
+let h = 5 ;;
+let mur_present = generate_lab l h ;;
+
+let taille_case = ((700 - 2* margin)/ l) ;;
+
+let a = trace_pourtour upleftx uplefty taille_case l h;;
+(* trace_mur upleftx uplefty taille_case (1,2,2); *)
+let b = trace_lab upleftx uplefty taille_case l h mur_present;;
+
+
+
+let qd = generate_lab 5 5;;
+
+let t = [|[|[|false; true; true; false; false|];
+[|false; false; false; true; false|];
+[|true; false; false; false; true|]; [|false; true; true; false; true|];
+[|true; true; true; true; false|]|];
+[|[|false; false; true; false; true|]; [|true; true; true; true; true|];
+[|false; true; true; false; true|]; [|false; false; false; false; true|];
+[|false; false; true; false; true|]|]|]
+
+
+let margin = 20;;
+let upleftx = margin;;
+let uplefty = 700 - margin ;;
+let l = 5 ;;
+let h = 5 ;;
+let mur_present = generate_lab l h ;;
+let taille_case = ((700 - 2* margin)/ l) ;;
+let b = trace_pourtour upleftx uplefty taille_case l h;;
+let a = trace_lab upleftx uplefty taille_case l h mur_present;;
+
+;;
+let c = trace_mur upleftx uplefty taille_case (1,1,0);;
+
+
+true false true    false false false    true true false
+false false true   true false true      false true true
