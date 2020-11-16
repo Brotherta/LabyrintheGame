@@ -56,12 +56,13 @@ open Format;;
 #load "graphics.cma";;
 Graphics.open_graph " 1000x1000";;
 
-let case_pacman = ref (0,0) 
+let case_pacman = ref (0,0);;
+let win = ref false;;
 let margin = ref 20 ;;
 let upleftx = ref !margin ;;
 let uplefty = ref (1000 - !margin) ;;
-let l = ref 25;; 
-let h = ref 25;; 
+let l = ref 15;; 
+let h = ref 15;; 
 let taille_case = ref ((700 - 2* !margin)/ !l);;
 
 (* Tire un mur aléatoire, et renvoie (d,x y) ou d = 0 ou 1 (0 pour vertical et 1 pour horizontal x colonne et y lignes. *)                    
@@ -170,8 +171,23 @@ let draw_pacman (x,y) =
   Graphics.fill_circle (abs + int_of_float(taille_pacman *. 0.25)) (ord + int_of_float(taille_pacman *. 0.40)) (int_of_float (taille_pacman *. 0.15))
 ;;
 
-let draw_pas_pacman =
-  
+let draw_pas_pacman () =
+  let x,y = !case_pacman in
+  let abs = !upleftx + ((!taille_case / 2) + x * !taille_case) in
+  let ord = !uplefty - ((!taille_case / 2) + y * !taille_case) in
+  let taille_pacman = (float_of_int !taille_case -. 0.2 *. float_of_int !taille_case) /. 2. in 
+
+  Graphics.set_color Graphics.white;
+  Graphics.fill_circle abs ord (int_of_float(taille_pacman *. 1.1));
+;;
+
+let draw_win () =
+  Graphics.fill_rect 0 0 1000 1000;
+  Graphics.moveto 500 500;
+  Graphics.set_color Graphics.white;
+  Graphics.set_text_size 50;
+  Graphics.draw_string "Vous avez gagnez grace au pouvoir de l'amitie"
+;;
 
 type direction = 
   | Left
@@ -181,10 +197,20 @@ type direction =
   | Wrong
 ;;
 
+let pacman_win () = 
+  let x,y = !case_pacman in
+  if (!h-1, !l-1) = (x,y) then begin 
+    win := true;
+  end
+;;
+
 let wrong_move_out_of_bound mur_present direction (x,y)  = 
   let taille_x = Array.length mur_present.(0) in 
   let taille_y = Array.length mur_present.(0).(0) in
-  if x < 0 && direction = Left then false
+  if (x,y) = (!l-1,!h-1) && direction = Right then begin
+    true
+  end
+  else if x < 0 && direction = Left then false
   else if x > taille_x && direction = Right then false 
   else if y < 0 && direction = Up then false
   else if y > taille_y && direction = Down then false
@@ -202,21 +228,25 @@ let wrong_move_wall mur_present direction (x,y) = match direction with
 let move_pacman mur_present direction (x,y) = match direction with
   | Left -> if (wrong_move_out_of_bound mur_present direction (x-1, y)) && (wrong_move_wall mur_present direction (x,y) ) 
           then begin  
+            draw_pas_pacman ();
             draw_pacman (x-1,y);
             case_pacman := (x-1,y);
           end
   | Right -> if (wrong_move_out_of_bound mur_present direction (x+1, y)) && (wrong_move_wall mur_present direction (x,y) ) 
           then begin
+            draw_pas_pacman ();
             draw_pacman (x+1,y);
             case_pacman := (x+1,y);
           end
   | Up -> if (wrong_move_out_of_bound mur_present direction (x,y-1)) && (wrong_move_wall mur_present direction (x,y) ) 
           then begin 
+            draw_pas_pacman ();
             draw_pacman (x,y-1);
             case_pacman := (x,y-1);
           end
   | Down -> if (wrong_move_out_of_bound mur_present direction (x,y+1)) && (wrong_move_wall mur_present direction (x,y) ) 
           then begin 
+            draw_pas_pacman ();
             draw_pacman (x,y+1);
             case_pacman := (x,y+1);
           end
@@ -233,11 +263,13 @@ let handle_char c mur_present (x,y)  = match c with
 
 let pacman mur_present = 
   draw_pacman (0,0);
-  while true do
+  while not (!win) do
     let x,y = !case_pacman in
+    pacman_win ();
     let s = Graphics.wait_next_event [Graphics.Key_pressed] in
     handle_char s.Graphics.key mur_present (x,y)
   done;
+  draw_win ();
 ;; 
 
 
