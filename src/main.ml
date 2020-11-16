@@ -106,6 +106,7 @@ let generate_lab l h =
 Graphics.open_graph " 1000x1000";;
 
 let trace_pourtour upleftx uplefty taille_case l h = 
+  Graphics.set_color Graphics.black;
   Graphics.moveto upleftx uplefty;
   Graphics.lineto (upleftx + taille_case*l) uplefty;
   Graphics.lineto (upleftx + taille_case*l) ((uplefty - taille_case*h) + taille_case);
@@ -135,6 +136,22 @@ let trace_lab upleftx uplefty taille_case l h mur_present =
     done
   done
 ;;
+(*value draw_circle : int -> int -> int -> unit
+ Graphics.draw_circle 200 200 (int_of_float taille_pacman)
+  draw_circle x y r draws a circle with center x,y and radius r. The current point is unchanged. 
+  fill_circle
+  value set_color : color -> unit*)
+let draw_pacman upleftx uplefty margin taille_case case = 
+  let taille_pacman = (float_of_int taille_case -. 0.1 *. float_of_int taille_case) /. 2. in 
+  Graphics.set_color Graphics.yellow;
+  Graphics.fill_circle 200 200 (int_of_float taille_pacman);;
+
+let pacman = 
+  while true do
+    let s = Graphics.wait_next_event [Graphics.Key_pressed] in
+
+  done;
+
 
 
 let () =
@@ -142,11 +159,13 @@ let () =
   let margin = 20 in
   let upleftx = margin in
   let uplefty = 1000 - margin in
-  let l = 500 in
-  let h = 500 in
+  let l = 25 in
+  let h = 25 in
   let mur_present = generate_lab l h in
   
   let taille_case = ((700 - 2* margin)/ l) in
+  draw_pacman 0 0 taille_case 0 0;
+
 
   trace_pourtour upleftx uplefty taille_case l h;
   (* trace_mur upleftx uplefty taille_case (1,2,2); *)
