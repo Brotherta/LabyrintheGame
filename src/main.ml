@@ -54,7 +54,6 @@ module  UF =
                     (* Labyrinthe.ml... *)
 open Format;;
 #load "graphics.cma";;
-Graphics.open_graph " 1000x1000";;
 
 let case_pacman = ref (0,0);;
 let win = ref false;;
@@ -274,20 +273,9 @@ let pacman mur_present =
 
 
 let () =
-  (* trace_pourtour  *)
-  (* let case_pacman = ref (0,0) in
-  let margin = 20 in
-  let upleftx = margin in
-  let uplefty = 1000 - margin in
-  let l = 25 in
-  let h = 25 in *)
   let mur_present = generate_lab !l !h in
-  (* let taille_case = ((700 - 2* !margin)/ !l) in *)
-
-
+  Graphics.open_graph " 1000x1000";
   trace_pourtour !upleftx !uplefty !taille_case !l !h;
-  (* trace_mur upleftx uplefty taille_case (1,2,2); *)
   trace_lab !upleftx !uplefty !taille_case !l !h mur_present;
   pacman mur_present;
-
 ;;
