@@ -53,11 +53,12 @@ module  UF =
 (***********************************************************************************************)
                     (* Labyrinthe.ml... *)
 open Format;;
-#load "graphics.cma";;
+(* #load "graphics.cma";; *)
 
 let case_pacman = ref (0,0);;
 let win = ref false;;
 let margin = ref 20 ;;
+
 let upleftx = ref !margin ;;
 let uplefty = ref (1000 - !margin) ;;
 let l = ref 15;; 
@@ -278,4 +279,5 @@ let () =
   trace_pourtour !upleftx !uplefty !taille_case !l !h;
   trace_lab !upleftx !uplefty !taille_case !l !h mur_present;
   pacman mur_present;
+  Graphics.read_key 
 ;;
