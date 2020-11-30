@@ -62,8 +62,8 @@ let margin = ref 20 ;;
 
 let upleftx = ref !margin ;;
 let uplefty = ref (1000 - !margin) ;;
-let l = ref 3;; 
-let h = ref 3;; 
+let l = ref 11;; 
+let h = ref 10;; 
 let case_fantome = ref (!l-1,0);;
 let taille_case = ref ((700 - 2* !margin)/ !l);;
 
@@ -102,8 +102,8 @@ let cases_voisines_first (d,x,y) =
 ;;
 
 let complete_mur_voisine mur_voisine =
-  for col = 0 to !l-1 do
-    for lig = 0 to !h-1 do
+  for col = 0 to !h-1 do
+    for lig = 0 to !l-1 do
       let l_voisine = mur_voisine.(lig).(col) in
       for i = 0 to (List.length l_voisine)-1 do
         let (x,y,fait) =  List.nth l_voisine i in
@@ -148,7 +148,7 @@ let generate_lab l h =
   done;
   mur_present.(0).(l-1).(h-1) <- false;
   let mur_voisine_new = complete_mur_voisine mur_voisine in
-  mur_present, mur_voisine_new
+  (mur_present, mur_voisine_new)
 ;;
 
 let trace_pourtour upleftx uplefty taille_case l h = 
@@ -182,7 +182,7 @@ let trace_lab upleftx uplefty taille_case l h mur_present =
     done
   done
 ;;
-(*value draw_circle : int -> int -> int -> unit
+(* value draw_circle : int -> int -> int -> unit
  Graphics.draw_circle 200 200 (int_of_float taille_pacman)
   draw_circle x y r draws a circle with center x,y and radius r. The current point is unchanged. 
   fill_circle
@@ -259,6 +259,11 @@ let draw_lose () =
   Graphics.draw_string "Vous avez perdu a cause du pouvoir des forces du mal"
 ;;
 
+let draw_win_or_lose () =
+  if !win_fantome then draw_lose ()
+  else draw_win ()
+;;
+
 let wrong_move_out_of_bound mur_present direction (x,y)  = 
   let taille_x = Array.length mur_present.(0) in 
   let taille_y = Array.length mur_present.(0).(0) in
@@ -320,43 +325,114 @@ let handle_char c mur_present (x,y) = match c with
 let win_or_lose () = 
   let x,y = !case_pacman in
   if !case_fantome = !case_pacman then  win_fantome := true
-  else if (!h-1, !l-1) = (x,y) then win := true;
+  else if (!l, !h-1) = (x,y) then win := true;
 ;;
+
+
+let pacman_win () = 
+  let x,y = !case_pacman in
+  if (!l, !h-1) = (x,y) then begin 
+    win := true;
+  end
+;;
+
+(* let draw_position () = 
+  let (x,y) = !case_pacman in
+  Graphics.fill_rect 500 500 30 30;
+  Graphics.moveto 500 500;
+  Graphics.set_color Graphics.white;
+  Graphics.set_text_size 50;
+  Graphics.draw_string ("("^string_of_int x^","^string_of_int y^")")   *)
 
 let pacman mur_present = 
   draw_entity !case_pacman Pacman ;
-  while not (!win) do
+  while not (!win || !win_fantome) do
     let x,y = !case_pacman in
-    win_or_lose ();
     let s = Graphics.wait_next_event [Graphics.Key_pressed] in
-    handle_char s.Graphics.key mur_present (x,y)
+    handle_char s.Graphics.key mur_present (x,y);
+     (*draw_position (); *)
+    win_or_lose ();
   done;
-  draw_win ();
+  draw_win_or_lose ();
 ;; 
 
-let fantome mur_present = 
+let rec est_reliee src dest evite mur_voisines =
+  if src = dest then true
+  else begin 
+    let (x_src,y_src) = src in
+    let voisines = mur_voisines.(x_src).(y_src) in
+    let l_voisines = List.length voisines in
+
+    let my_bool = ref false in
+    let my_true_bool = ref false in
+
+    for i = 0 to l_voisines -1 do 
+      let (x_cur, y_cur, mybool) = List.nth voisines i in
+      let current = x_cur, y_cur in
+      if (current <> evite) then begin 
+        my_bool := est_reliee current dest (x_src,y_src) mur_voisines;
+        if !my_bool then my_true_bool := true
+        else ()
+      end
+    done;
+    !my_true_bool;
+  end
+;;
+
+let which_direction current =
+  let x_cur, y_cur = current in
+  let x_fan, y_fan = !case_fantome in
+  if x_fan < x_cur then Right
+  else if x_fan > x_cur then Left
+  else if y_fan < y_cur then Down
+  else Up
+;;
+
+
+
+let where_to_move mur_voisine = 
+  let x,y = !case_fantome in 
+  let voisines = mur_voisine.(x).(y) in
+  let l_voisines = List.length voisines in
+  let direction = ref Right in
+  for i = 0 to l_voisines - 1 do
+    let (x_cur, y_cur, mybool) = List.nth voisines i in
+    let current = x_cur, y_cur in
+    if est_reliee current !case_fantome current mur_voisine then direction := which_direction current
+  done;
+  !direction
+;;
+
+  (* if est_reliee !case_fantome !case_pacman !case_fantome mur_voisines then  *)
+
+
+let fantome mur_present mur_voisine = 
   draw_entity !case_fantome Fantome;
   Unix.sleep 2;
-  while not (!win_fantome) do
-    let x,y = !case_fantome in
-    move_entity mur_present Left (x,y) Fantome;
+  while not (!win || !win_fantome) do
     Unix.sleep 2;
+    let x,y = !case_fantome in
+    move_entity mur_present (where_to_move mur_voisine) (x,y) Fantome;
+    
+    win_or_lose ();
   done;
-  draw_lose ();
-;; 
-
-let thread_fantome mur_present = Thread.create fantome mur_present ;;
+  draw_win_or_lose ();
 ;;
+
+let thread_fantome mur_present mur_voisine = Thread.create fantome mur_present mur_voisine;;
+;;
+
 
 (*ocamlc -thread graphics.cma unix.cma threads.cma projet.ml.*)
 
 let () =
-  let mur_present,mur_voisine= generate_lab !l !h in
+  let mur_present, mur_voisine = generate_lab !l !h in
   Graphics.open_graph " 1000x1000";
   trace_pourtour !upleftx !uplefty !taille_case !l !h;
   trace_lab !upleftx !uplefty !taille_case !l !h mur_present;
-  (* thread_fantome mur_present;
-  pacman mur_present; *)
+
+  let i = thread_fantome mur_present mur_voisine in
+  pacman mur_present;
   ignore @@ Graphics.read_key ()
 ;;
  
