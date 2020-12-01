@@ -1,6 +1,5 @@
 (* Module qui définie le type Union_Find *)
 
-
 module type UF = 
   sig
     type t 
