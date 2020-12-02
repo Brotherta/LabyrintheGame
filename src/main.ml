@@ -80,7 +80,7 @@ type difficulty =
   | None
   
 open Format
-let case_pacman = ref (0,0)  (* declaration des globales a utilisee pour plus tard *)
+let case_pacman = ref (0,0)  (* déclaration des globales à utiliseée pour plus tard *)
 let win_pacman = ref false
 let win_fantome = ref false
 let margin = ref 0 
@@ -218,10 +218,10 @@ let trace_lab upleftx uplefty taille_case l h mur_present =
 
 (* AFFICHAGE PACMAN ET FANTOME *)
 
-let draw_entity (x,y) entity =  (*draw_entity prend en argument la position de l'entite et l'entite en question, la seul difference entre Pacman et le Fantome est la couleur*) 
-  if entity = Pacman then begin (* toutefois plutot que de donné en parametre une couleur, ce qui ne serai pas tres logique, nous avons choisi de declarer un type entity avec Pacman*)
-    case_pacman := (x,y);       (*et Fantome en valeur possible cela laisse la possibilite de cree d'autre entite et de faire de draw_entity une fonction qui match une entity avec une*)
-    let abs = !upleftx + ((!taille_case / 2) + x * !taille_case) in (* fonction de dessin associe, toutefois pour 2 dessins differents ce n'est pas necessaire*)
+let draw_entity (x,y) entity =  (*draw_entity prend en argument la position de l'entité et l'entité en question, la seule différence entre Pacman et le Fantome est la couleur*) 
+  if entity = Pacman then begin (* toutefois plutot que de donner en paramètre une couleur, ce qui ne serait pas très logique, nous avons choisi de déclarer un type entity avec Pacman*)
+    case_pacman := (x,y);       (*et Fantome en valeur possible cela laisse la possibilité de créer d'autre entité et de faire de draw_entity une fonction qui match une entity avec une*)
+    let abs = !upleftx + ((!taille_case / 2) + x * !taille_case) in (* fonction de dessin associée, toutefois pour 2 dessins différents ce n'est pas nécessaire*)
     let ord = !uplefty - ((!taille_case / 2) + y * !taille_case) in
     let taille_pacman = (float_of_int !taille_case -. 0.2 *. float_of_int !taille_case) /. 2.1 in 
     Graphics.set_color Graphics.yellow;
@@ -296,10 +296,10 @@ let wrong_move_out_of_bound mur_present direction (x,y)  =
   if (x,y) = (!l-1,!h-1) && direction = Right then begin
     true
   end
-else if x < 0 && direction = Left then false (*Si le mouvement demande est 'Gauche' et que la position actuel est a l'extreme droite, alors c'est impossible *)
-  else if x > taille_x && direction = Right then false (*Si le mouvement demande est 'Droite' et que la position actuel est a l'extreme gauche, alors c'est impossible *)
-  else if y < 0 && direction = Up then false (*Si le mouvement demande est 'Haut' et que la position actuel est a l'extreme Haut, alors c'est impossible *)
-  else if y > taille_y && direction = Down then false (*Si le mouvement demande est 'Bas' et que la position actuel est a l'extreme bas, alors c'est impossible *)
+else if x < 0 && direction = Left then false (*Si le mouvement demande est 'Gauche' et que la position actuel est à l'extreme droite, alors c'est impossible *)
+  else if x > taille_x && direction = Right then false (*Si le mouvement demande est 'Droite' et que la position actuel est à l'extreme gauche, alors c'est impossible *)
+  else if y < 0 && direction = Up then false (*Si le mouvement demande est 'Haut' et que la position actuel est à l'extreme Haut, alors c'est impossible *)
+  else if y > taille_y && direction = Down then false (*Si le mouvement demande est 'Bas' et que la position actuel est à l'extreme bas, alors c'est impossible *)
   else true
 
 let wrong_move_wall mur_present direction (x,y) = match direction with
@@ -348,31 +348,31 @@ let handle_char c mur_present (x,y) = match c with
 (* MOUVEMENT DU FANTOME *)
 
 let rec est_reliee src dest evite cases_voisines =
-  if src = dest then true (*Cas de sorti, si la position source de la recherche correspond bien a celle de destination, ici celle du pacman *)
+  if src = dest then true (*Cas de sorti, si la position source de la recherche correspond bien à celle de destination, ici celle du pacman *)
   else begin 
     let (x_src,y_src) = src in
     let voisines = cases_voisines.(x_src).(y_src) in (*La liste de case voisine de la cases source *)
     let l_voisines = List.length voisines in (*le nombre de case voisines possible *)
 
-    let my_bool = ref false in      (*Ocaml ne permet pas de faire un return true sans return false a l'interieur d'une boucle for, par consequent on stock la possibilite ou non *)
-    let my_true_bool = ref false in (*de se deplacer d'une case a une autre dans une variable my_bool. Si my_bool vaut true, alors my_true_bool viendra stocker cette valeur pour la retourner *) 
-                                    (*Si aucun des chemins n'amene a true, c'est que le chemin n'est pas bon, en sortant de la boucle for, my_true_bool sera donc toujours a sa valeur intila, false *)
-    for i = 0 to l_voisines -1 do   (*la boucle s'effectue sur toute les cases voisines a la case source recuperer depuis voisines, le nombre de case voisine etant defini par l_voisines *)
-      let (x_cur, y_cur, mybool) = List.nth voisines i in (*mybool a ne pas confondre avec my_bool, mybool correspond a une valeur inutilise ici, complete_case_voisine*)
-      let current = x_cur, y_cur in                         (*le format des cases contient leur position x et y, et un booleen utilise pour la fonction complete_case_voisine*)
-      if (current <> evite) then begin  (*si la case actuel n'est pas une case a evite ALORS [...], parmi la liste des cases voisines on evite de reflechir a si retourner en arriere aurai un interet ... car la reponse est non *)
-        my_bool := est_reliee current dest (x_src,y_src) cases_voisines; (*En effet le fantome n'a aucune raison de retourner sur la case precedente puisque pacman ne peux pas etre passer derriere le fantome*)
-        if !my_bool then my_true_bool := true                             (*et cela evite d'avoir une boucle infini fesant faire au fantome des aller-retour entre deux meme cases *)
+    let my_bool = ref false in      (*Ocaml ne permet pas de faire un return true sans return false à l'interieur d'une boucle for, par consequent on stock la possibilité ou non *)
+    let my_true_bool = ref false in (*de se deplacer d'une case à une autre dans une variable my_bool. Si my_bool vaut true, alors my_true_bool viendra stocker cette valeur pour la retourner *) 
+                                    (*Si aucun des chemins amène à true, c'est que le chemin n'est pas bon, en sortant de la boucle for, my_true_bool sera donc toujours à sa valeur intiale, false *)
+    for i = 0 to l_voisines -1 do   (*la boucle observe toute les cases voisines de la case passée en paramètre, le nombre de case voisine étant defini par l_voisines *)
+      let (x_cur, y_cur, mybool) = List.nth voisines i in (*mybool a ne pas confondre avec my_bool, mybool correspond à une valeur inutilisée ici, *)
+      let current = x_cur, y_cur in                         (*le format des cases contient leurs positions x et y, et un booléen utilisé pour la fonction complete_case_voisine*)
+      if (current <> evite) then begin  (*si la case actuel n'est pas une case à evité ALORS [...], parmi la liste des cases voisines on évite de réflechir si l'on a à retourner en arrière... car la réponse est non *)
+        my_bool := est_reliee current dest (x_src,y_src) cases_voisines; (*En effet le fantome n'a aucune raison de retourner sur la case précedente puisque pacman ne peux pas etre passer derrière le fantome*)
+        if !my_bool then my_true_bool := true                             (* Cela evite d'avoir une boucle infini faisant faire au fantome des aller-retour entre deux meme cases. *)
       end
     done;
-    !my_true_bool; (*On retourne bien my_true_bool, qui, si au moins une case voisine est un chemin, est a la valeur true, sinon false car initialise a false et jamais modifie *)
+    !my_true_bool; (*On retourne bien my_true_bool, qui, si au moins une case voisine est un chemin, est à la valeur true, sinon false car initialisée à false et jamais modifiée. *)
   end
 
-let which_direction current = (*Pacman et Fantome se deplace tout les deux a l'aide de la fonction move_entity, fonction qui prend en argument une Direction et une entity *)
-  let x_cur, y_cur = current in (*Par consequent il faut convertir la futur case sur laquel Fantome doit se deplacer en une Direction, Right Left Down ou Up *)
-  let x_fan, y_fan = !case_fantome in  (*La case ou Fantome doit se deplacer s'appel current car la fonction est appeler depuis where_to_move dans laquel current correspond a la case actuellement observer *)
-  if x_fan < x_cur then Right (*On compare la case ou le fantome doit etre, avec celle sur laquel il est actuellement placer, selon la valeur de x on sait s'il doit se deplacer a droite *)
-  else if x_fan > x_cur then Left (*ou a gauche *)
+let which_direction current = (*Pacman et Fantome se déplace tout les deux à l'aide de la fonction move_entity, fonction qui prend en argument une Direction et une entity *)
+  let x_cur, y_cur = current in (*Par conséquent il faut convertir la futur case sur laquel Fantome doit se déplacer dans une Direction, Right Left Down ou Up. *)
+  let x_fan, y_fan = !case_fantome in  (*La case ou Fantome doit se déplacer s'appel current car la fonction est appeler depuis where_to_move dans laquel current correspond à la case actuellement observer *)
+  if x_fan < x_cur then Right (*On compare la case où le fantome doit être, avec celle sur laquelle il est actuellement placé. Selon la valeur de x on sait s'il doit se déplacer à droite *)
+  else if x_fan > x_cur then Left (*ou à gauche *)
   else if y_fan < y_cur then Down (*et selon Y en bas *)
   else Up (*ou bien en haut *)
 
@@ -406,23 +406,23 @@ let win_or_lose () =
   if !case_fantome = !case_pacman then  win_fantome := true
   else if (!l, !h-1) = (x,y) then win_pacman := true
 
-let pacman_win () = (*Ancienne version pour savoir si Pacman est bien arrive a la fin du labyrinthe, remplacer aujourd'hui par win_or_lose qui controle aussi pour le Fantome*)
-  let x,y = !case_pacman in (*L'interet de controler si pacman gagne ou perd dans une meme fonction appele par Fantome et Pacman est de pouvoir perdre si Pacman rentre volontairement*)
-  if (!l, !h-1) = (x,y) then begin (*Dans la fantome PENDANT le temps de 'pause' de Fantome (Unix.sleep) *)
+let pacman_win () = (*Ancienne version pour savoir si Pacman est bien arrive a la fin du labyrinthe, remplacée aujourd'hui par win_or_lose qui controle aussi pour le Fantome*)
+  let x,y = !case_pacman in (*L'intérêt de contrôler, si pacman gagne ou perd dans une même fonction, appelée par Fantome et Pacman, est de pouvoir perdre si Pacman rentre volontairement*)
+  if (!l, !h-1) = (x,y) then begin (*dans la fantôme PENDANT le temps de 'pause' de Fantome (Unix.sleep) *)
     win_pacman := true;
   end
 
 let pacman mur_present = 
-  draw_entity !case_pacman Pacman ; (*fait apparaitre Pacman a sa case initial*)
-  while not (!win_pacman || !win_fantome) do (*On repete la boucle tant que personne n'a gagne*)
+  draw_entity !case_pacman Pacman ; (*fait apparaître Pacman à sa case initial*)
+  while not (!win_pacman || !win_fantome) do (*On répète la boucle tant que personne n'a gagné *)
     let x,y = !case_pacman in
-    let s = Graphics.wait_next_event [Graphics.Key_pressed] in (*Cette fonction retourne le premier caractere presser*)
-    handle_char s.Graphics.key mur_present (x,y); (*handle_char s'occupe de match le caractere avec un mouvement*)
-    win_or_lose (); (*on controle la victoire ou la defaite APRES s'etre deplace*)
+    let s = Graphics.wait_next_event [Graphics.Key_pressed] in (*Cette fonction retourne le premier caractère pressé*)
+    handle_char s.Graphics.key mur_present (x,y); (*handle_char s'occupe de match le caractère avec un mouvement*)
+    win_or_lose (); (*on contrôle la victoire ou la defaite APRES s'être deplacé*)
   done;
-  draw_win_or_lose () (*On dessine le resultat victoire ou defaite*)
+  draw_win_or_lose () (*On dessine le résultat : victoire ou defaite*)
 
-let fantome mur_present = (*Fonction miroir de Pacman, mais dont les decisions de deplacement se calcul a l'aide de where_to_move*)
+let fantome mur_present = (*Fonction miroir de Pacman, mais dont les décisions de deplacement se calcul à l'aide de where_to_move*)
   draw_entity !case_fantome Fantome;
   while not (!win_pacman || !win_fantome) do
     Unix.sleepf !difficulty; 
@@ -437,8 +437,8 @@ let thread_fantome mur_present = Thread.create fantome mur_present (*Permet de l
    
 (* INITIALISATION DU JEU *)
 let menu () =
-  printf "Initialisation en cours ...\n"; (*Sa fait plus jolie ^-^ *)
-  let colonne = ref (-1) in (*Initialise a -1 pour indiquer que le choix n'est pas encore fait/valide*)
+  printf "Initialisation en cours ...\n"; (* ça fait plus jolie ^-^ *)
+  let colonne = ref (-1) in (* Initialise à -1 pour indiquer que le choix n'est pas encore fait/valide*)
   let ligne = ref (-1) in
   let diff=ref(-1) in
   let choixDiff= ref None in
@@ -446,29 +446,29 @@ let menu () =
       print_string "Entrez le nombre de colonnes souhaite, ce nombre doit etre entre 4 et 40\n";
       while !colonne=(-1) do
         begin
-          try colonne := read_int (); (*Si read_int ne lie pas un int la variable colonne ne sera pas modifie et restera a -1, par consequent la boucle se repete*)
+          try colonne := read_int (); (* Si read_int ne lie pas un int la variable colonne ne sera pas modifiée et restera a -1, par conséquent la boucle se répète*)
           with int_of_string -> ();
         end;
           if not(!colonne > 3 && !colonne <= 40) then begin 
              print_string "Mauvaise entree, Entrez le nombre de colonnes souhaite, ce nombre doit etre entre 4 et 40\n";
-             colonne := (-1) (*Si la valeur n'est pas valide alors on la defini comme etant invalide en mettant -1, a noter que cette ligne s'execute si read_int echoue, inutile mais inutile de chercher a l'eviter*)
-          end
+             colonne := (-1) (*Si la valeur n'est pas valide, alors on la defini comme étant invalide en mettant -1, *)
+          end               (*à noter que cette ligne s'éxecute si read_int échoue ce qui n'a pas d'intérêt puisque déjà à -1 mais inutile de chercher à l'eviter*)
       done;
 
       print_string "Entrez le nombre de lignes souhaite, ce nombre doit etre entre 4 et 40\n";
-      while !ligne = (-1) do (*Boucle miroir a la precedente mais pour les lignes cette fois, aucune difference*)
+      while !ligne = (-1) do (*Boucle miroir à la précédente mais pour les lignes cette fois, aucune différence*)
         begin
           try ligne := read_int();
           with int_of_string -> ();
         end;
-          if not(!ligne > 3 && !ligne <= 40) then begin (*Il est possible de simplifier ces deux boucles en une fonction valeur_valide PARAM avec PARAM etant le string a modifie dans le print d'informations*)
-            print_string "Mauvaise entree, Entrez le nombre de ligne souhaite, ce nombre doit etre entre 4 et 40\n"; (*de cette maniere let ligne= valeur_valide "ligne" *)
-            ligne := (-1) (*Toutefois la troisieme boucle rend plus compliquer la simplification et a vrai dire, une simplification telle pour deux boucles parait assez anecdotique*)
+          if not(!ligne > 3 && !ligne <= 40) then begin (*Il est possible de simplifier ces deux boucles en une fonction valeur_valide PARAM avec PARAM étant le string à modifier dans le print d'information*)
+            print_string "Mauvaise entree, Entrez le nombre de ligne souhaite, ce nombre doit etre entre 4 et 40\n"; (*de cette manière let ligne= valeur_valide "ligne" *)
+            ligne := (-1) (*Toutefois la troisieme boucle rend plus compliquer la simplification et à vrai dire, une simplification telle pour deux boucles paraît assez anecdotique*)
           end
       done;
 
       print_string "Entrez la difficulte 1)Facile 2)Normal 3)Difficile 4)UltraHardcore\n";
-      while !diff = (-1) do (*Boucle miroir a la precedente mais pour la difficulte cette fois, simple difference sur la condition de validite*)
+      while !diff = (-1) do (*Boucle miroir a la précedente mais pour la difficulté cette fois, simple différence sur la condition de validitée*)
         begin
           try diff := read_int();
           with int_of_string -> ();
