@@ -1,3 +1,7 @@
+(* Projet Pacman - Programmation Fonctionnelle - Etienne Lozes - décembre 2020 - L3 Informatique - Nice Sophia Antipolis *)
+(* Antoine Vidal-Mazuy *)
+(* Valentin Mascaro *)
+
 (***********************************************************************************************)
 (***********************************************************************************************)
                 (* Module qui définie le type Union_Find *)
@@ -47,7 +51,7 @@ module  UF =
 ;;
 (***********************************************************************************************)
 (***********************************************************************************************)
-
+(*#############################################################################################*)
 (***********************************************************************************************)
 (***********************************************************************************************)
 
@@ -57,15 +61,17 @@ module  UF =
                 (* Génération et déclaration de variable *)
 (***********************************************************************************************)
 (***********************************************************************************************)
-type direction = 
+type direction = (* Type utilisé dans la gestion du mouvement du fantome et du pacman. *)
   | Left
   | Right
   | Up
   | Down
   | Wrong
+
 type entity = 
   | Pacman
   | Fantome
+
 type difficulty =
   | Easy
   | Normal
@@ -75,17 +81,17 @@ type difficulty =
   
 open Format
 let case_pacman = ref (0,0)
-let win = ref false
+let win_pacman = ref false
 let win_fantome = ref false
 let margin = ref 0 
 let upleftx = ref 0 
 let uplefty = ref 0 
-let l = ref 0
-let h = ref 0
+let l = ref 0  (* longueur (nombre de colonne) *)
+let h = ref 0  (* hauteur (nombre de ligne) *)
 let case_fantome = ref (0,0)
 let taille_case = ref 0
-let mur_voisine = ref [|[| [0,0,true] |] |]
-let width = ref 0
+let cases_voisines = ref [|[| [0,0,true] |] |]
+let width = ref 0 
 let heigh = ref 0
 let difficulty = ref 0.;
 ;;
@@ -93,25 +99,25 @@ let difficulty = ref 0.;
 
 
 (* GENERATION DU TABLEAU DES CASES VOISINES *)
-let generate_voisine l h =
-  Array.init l (fun _ -> Array.init h (fun _ -> []))
+let generate_cases_voisines l h =                              
+  Array.init l (fun _ -> Array.init h (fun _ -> []))    (* Génère un tableau à 2 entrée contenant des listes de type [(col, lig, bool); (...)].*)
 
-let cases_voisines_first (d,x,y) =
+let cases_voisines_first (d,x,y) =                      (* Renvoie le couple (colonne, ligne, bool) selon le mur donné en paramètre. *)
   if d = 0 then [(x+1, y, false)] else [(x, y+1, false)]
 
-let complete_mur_voisine mur_voisine =
+let complete_case_voisine cases_voisines =                  (* Complete le tableau des cases voisines*)
   for col = 0 to !h-1 do
-    for lig = 0 to !l-1 do
-      let l_voisine = mur_voisine.(lig).(col) in
-      for i = 0 to (List.length l_voisine)-1 do
-        let (x,y,fait) =  List.nth l_voisine i in
-        if not fait then begin 
-          mur_voisine.(x).(y) <- List.append mur_voisine.(x).(y) [(lig, col, true)]
-        end
-      done;
+    for lig = 0 to !l-1 do                               (* On parcours le tableau. *)
+      let l_voisine = cases_voisines.(lig).(col) in         (* On récupère pour chaque case du tableau, la liste des couples de cases voisines déjà présentes. *)
+      for i = 0 to (List.length l_voisine)-1 do          (* On récupère la taille de la liste pour la parcourir. *)
+        let (x,y,fait) =  List.nth l_voisine i in        (* (x:col, y:lig, fait:bool) *)
+        if not fait then begin                           (* On vérifie si le couple à été généré par cases_voisines_first ou pat complete_case_voisine. *)
+          cases_voisines.(x).(y) <- List.append cases_voisines.(x).(y) [(lig, col, true)]  (* Si elle à été généré par cases_voisines_first on le rajoute dans la..*)
+        end                                                                          (* ..case (lig, col, true) dans la case (x, y). *)
+      done;                                              (* Cela nous permet de remplir le tableau sans faire de doublon et en n'oubliant aucune case.*)
     done;
   done;
-  mur_voisine
+  cases_voisines
 ;;
 
 
@@ -125,18 +131,18 @@ let mur_au_hasard l h =  (* Tire un mur aléatoire, et renvoie (d,x y) ou d = 0 
   else let n2 = n - (l-1) * h in
     (1, n2 mod l, n2 / l)
 
-let cases_adjacentes l h (d,x,y) = 
+let cases_adjacentes l h (d,x,y) = (* Renvoie le numéro de la case adjancente a la case passée en paramètre. *)
   if d = 0 then (* vertical *)
     ((y*l) + x, (y*l) + x +1)
   else (* horizontal *)
     ((y*l) + x, (y*l) + x +l)
 
-let generate_mur_present l h = 
+let generate_mur_present l h =  (* Initialise le tableau à trois entrées contenant les murs.*)
   Array.init 2 (fun _ -> Array.init l (fun _ -> Array.init h (fun _ -> true)))
 
-let generate_lab l h =
+let generate_lab l h =  (* Génère le tableau murs_presents et le tableau cases_voisines*)
   let mur_present = generate_mur_present l h in
-  let mur_voisine = generate_voisine l h in
+  let cases_voisines = generate_cases_voisines l h in
   let uf = UF.create (l*h) in
   let acc = ref 1 in
   let test = ref (l*h) in
@@ -149,19 +155,19 @@ let generate_lab l h =
       () (* pas d'incrémentation on fait rien *)
      
     else begin
-      UF.union uf i j;
-      mur_present.(d).(x).(y) <- false;
-      mur_voisine.(x).(y) <- List.append mur_voisine.(x).(y) (cases_voisines_first (d,x,y));
+      UF.union uf i j;                  (* On rempli en même temps le tableau mur_present et cases_voisines. Entre la case (0,0) et (0,1) si on *)
+      mur_present.(d).(x).(y) <- false; (* enlève le mur du bas, mur_present.(d:0,col:0,lig:0) <- false et la case dans  *)
+      cases_voisines.(x).(y) <- List.append cases_voisines.(x).(y) (cases_voisines_first (d,x,y)); 
       acc := !acc + 1;
     end
   done;
   mur_present.(0).(l-1).(h-1) <- false;
-  let mur_voisine_new = complete_mur_voisine mur_voisine in
-  (mur_present, mur_voisine_new)
+  let cases_voisines_new = complete_case_voisine cases_voisines in
+  (mur_present, cases_voisines_new)
 ;;
 (***********************************************************************************************)
 (***********************************************************************************************)
-
+(*#############################################################################################*)
 (***********************************************************************************************)
 (***********************************************************************************************)
 
@@ -202,7 +208,13 @@ let trace_lab upleftx uplefty taille_case l h mur_present =
       done
     done
   done
+
+  let draw_help_input () = 
+  Graphics.moveto (!width / 3) (!margin / 2);
+  Graphics.set_color Graphics.black;
+  Graphics.draw_string "Z:HAUT S:BAS Q:GAUCHE D:DROITE P:PARTIR"
 ;;
+
 
 (* AFFICHAGE PACMAN ET FANTOME *)
 
@@ -255,36 +267,26 @@ let draw_pas_entity (x,y) =
 
 
 (* AFFICHAGE VICTOIRE ET DEFAITE *)
-let draw_win () =
-  Graphics.set_color Graphics.white;
-  Graphics.fill_rect 0 0 !width !heigh;
-  Graphics.moveto (!width / 2) (!heigh / 2);
-  Graphics.set_color Graphics.black;
-  Graphics.draw_string "YOU WIN";
-  Unix.sleep 10;
-  exit 0
 
-let draw_lose () =
-  Graphics.set_color Graphics.white;
-  Graphics.fill_rect 0 0 !width !heigh;
-  Graphics.moveto (!width / 2) (!heigh / 2);
-  Graphics.set_color Graphics.black;
-  Graphics.draw_string "GAME OVER !";
-  Unix.sleep 10;
-  exit 0
-
-let draw_win_or_lose () =
-  if !win_fantome then draw_lose ()
-  else draw_win () 
-
-let draw_help_input () = 
+let draw_close_screen () = 
   Graphics.moveto (!width / 3) (!margin / 2);
   Graphics.set_color Graphics.black;
-  Graphics.draw_string "Z:HAUT S:BAS Q:GAUCHE D:DROITE P:PARTIR"
+  Graphics.draw_string "LA FENETRE SE FERMERA AUTOMATIQUEMENT DANS 5 SECONDES"
+
+let draw_win_or_lose () =
+  Graphics.set_color Graphics.white;
+  Graphics.fill_rect 0 0 !width !heigh;
+  Graphics.moveto (!width / 2) (!heigh / 2);
+  Graphics.set_color Graphics.black;
+  if !win_fantome then Graphics.draw_string "GAME OVER !"
+  else Graphics.draw_string "YOU WIN";
+  draw_close_screen ();
+  Unix.sleep 5;
+  exit 0
 ;;
 (***********************************************************************************************)
 (***********************************************************************************************)
-
+(*#############################################################################################*)
 (***********************************************************************************************)
 (***********************************************************************************************)
 
@@ -301,8 +303,8 @@ let wrong_move_out_of_bound mur_present direction (x,y)  =
   if (x,y) = (!l-1,!h-1) && direction = Right then begin
     true
   end
-  else if x < 0 && direction = Left then false
-  else if x > taille_x && direction = Right then false 
+else if x < 0 && direction = Left then false 
+  else if x > taille_x && direction = Right then false
   else if y < 0 && direction = Up then false
   else if y > taille_y && direction = Down then false
   else true
@@ -312,32 +314,32 @@ let wrong_move_wall mur_present direction (x,y) = match direction with
   | Right -> not mur_present.(0).(x).(y)
   | Up -> not mur_present.(1).(x).(y-1)
   | Down -> not mur_present.(1).(x).(y)
-  | Wrong -> false
+  | Wrong -> false 
 
 let move_entity mur_present direction (x,y) entity = match direction with 
     | Left -> if (wrong_move_out_of_bound mur_present direction (x-1, y)) && (wrong_move_wall mur_present direction (x,y) ) 
             then begin  
               draw_pas_entity (x,y);
               draw_entity (x-1,y) entity
-            end
+            end else Graphics.sound 440 500
     | Right -> if (wrong_move_out_of_bound mur_present direction (x+1, y)) && (wrong_move_wall mur_present direction (x,y) ) 
             then begin
               draw_pas_entity (x,y);
               draw_entity (x+1,y) entity
              
-            end
+            end else Graphics.sound 440 500
     | Up -> if (wrong_move_out_of_bound mur_present direction (x,y-1)) && (wrong_move_wall mur_present direction (x,y) ) 
             then begin 
               draw_pas_entity (x,y);
               draw_entity (x,y-1) entity
               
-            end
+            end else Graphics.sound 440 500
     | Down -> if (wrong_move_out_of_bound mur_present direction (x,y+1)) && (wrong_move_wall mur_present direction (x,y) ) 
             then begin 
               draw_pas_entity (x,y);
               draw_entity (x,y+1) entity
               
-            end
+            end else Graphics.sound 440 500
     | Wrong -> ()
 ;;
 (* MOUVEMENT DU PACMAN *)
@@ -352,11 +354,11 @@ let handle_char c mur_present (x,y) = match c with
 
 (* MOUVEMENT DU FANTOME *)
 
-let rec est_reliee src dest evite mur_voisines =
+let rec est_reliee src dest evite cases_voisines =
   if src = dest then true
   else begin 
     let (x_src,y_src) = src in
-    let voisines = mur_voisines.(x_src).(y_src) in
+    let voisines = cases_voisines.(x_src).(y_src) in
     let l_voisines = List.length voisines in
 
     let my_bool = ref false in
@@ -366,7 +368,7 @@ let rec est_reliee src dest evite mur_voisines =
       let (x_cur, y_cur, mybool) = List.nth voisines i in
       let current = x_cur, y_cur in
       if (current <> evite) then begin
-        my_bool := est_reliee current dest (x_src,y_src) mur_voisines;
+        my_bool := est_reliee current dest (x_src,y_src) cases_voisines;
         if !my_bool then my_true_bool := true
       end
     done;
@@ -381,22 +383,22 @@ let which_direction current =
   else if y_fan < y_cur then Down
   else Up
 
-let where_to_move mur_voisine = 
+let where_to_move cases_voisines = 
   let x,y = !case_fantome in 
-  let voisines = mur_voisine.(x).(y) in
+  let voisines = cases_voisines.(x).(y) in
   let l_voisines = List.length voisines in
   let direction = ref Right in
   for i = 0 to l_voisines - 1 do
     let (x_cur, y_cur, mybool) = List.nth voisines i in
     let current = x_cur, y_cur in
-    if est_reliee current !case_pacman !case_fantome mur_voisine then direction := which_direction current
+    if est_reliee current !case_pacman !case_fantome cases_voisines then direction := which_direction current
   done;
   !direction
 ;;
 
 (***********************************************************************************************)
 (***********************************************************************************************)
-
+(*#############################################################################################*)
 (***********************************************************************************************)
 (***********************************************************************************************)
 
@@ -409,17 +411,17 @@ let where_to_move mur_voisine =
 let win_or_lose () = 
   let x,y = !case_pacman in
   if !case_fantome = !case_pacman then  win_fantome := true
-  else if (!l, !h-1) = (x,y) then win := true
+  else if (!l, !h-1) = (x,y) then win_pacman := true
 
 let pacman_win () = 
   let x,y = !case_pacman in
   if (!l, !h-1) = (x,y) then begin 
-    win := true;
+    win_pacman := true;
   end
 
 let pacman mur_present = 
   draw_entity !case_pacman Pacman ;
-  while not (!win || !win_fantome) do
+  while not (!win_pacman || !win_fantome) do
     let x,y = !case_pacman in
     let s = Graphics.wait_next_event [Graphics.Key_pressed] in
     handle_char s.Graphics.key mur_present (x,y);
@@ -429,10 +431,10 @@ let pacman mur_present =
 
 let fantome mur_present = 
   draw_entity !case_fantome Fantome;
-  while not (!win || !win_fantome) do
+  while not (!win_pacman || !win_fantome) do
     Unix.sleepf !difficulty; 
     let x,y = !case_fantome in
-    move_entity mur_present (where_to_move !mur_voisine) (x,y) Fantome;
+    move_entity mur_present (where_to_move !cases_voisines) (x,y) Fantome;
     win_or_lose ();
   done;
   draw_win_or_lose ()
@@ -441,14 +443,13 @@ let thread_fantome mur_present = Thread.create fantome mur_present
 ;;
    
 (* INITIALISATION DU JEU *)
-let set_value () =
+let menu () =
   printf "Initialisation en cours ...\n";
   let colonne = ref (-1) in
   let ligne = ref (-1) in
   let diff=ref(-1) in
   let choixDiff= ref None in
-  (* let choixTermine = ref false in
-  while not (!choixTermine) do *)
+
       print_string "Entrez le nombre de colonnes souhaite, ce nombre doit etre entre 4 et 40\n";
       while !colonne=(-1) do
         begin
@@ -472,6 +473,7 @@ let set_value () =
             ligne := (-1)
           end
       done;
+
       print_string "Entrez la difficulte 1)Facile 2)Normal 3)Difficile 4)UltraHardcore\n";
       while !diff = (-1) do
         begin
@@ -492,16 +494,6 @@ let set_value () =
             end
           end
       done;
-
-      (* printf "Etes vous satisfait %d colonnes et  %d lignes oui / non : \n" !colonne !ligne;
-      let choix = read_line () in 
-      if choix = "oui" then choixTermine := true
-      else begin
-        choixTermine := false;
-        colonne:=(-1);
-        ligne:=(-1);
-      end
-  done; *)
   !ligne, !colonne, !choixDiff
 
 let set_difficulty diff = match diff with
@@ -512,9 +504,9 @@ let set_difficulty diff = match diff with
   | None -> difficulty := 0.
 
 let start_game () = 
-  let l_user, h_user, diff = set_value () in
+  let l_user, h_user, diff = menu () in
   set_difficulty diff;
-  win := false;
+  win_pacman := false;
   win_fantome := false;
   l := l_user;
   h := h_user;
@@ -534,9 +526,10 @@ let start_game () =
   let my_str = " "^string_of_int !width^"x"^string_of_int !heigh in
   Graphics.open_graph my_str;
 ;;  
-(***********************************************************************************************)
-(***********************************************************************************************)
 
+(***********************************************************************************************)
+(***********************************************************************************************)
+(*#############################################################################################*)
 (***********************************************************************************************)
 (***********************************************************************************************)
 
@@ -550,18 +543,17 @@ let start_game () =
 let () =
   start_game ();
   let mur_present, mur_vois = generate_lab !l !h in
-  mur_voisine := mur_vois;
+  cases_voisines := mur_vois;
   trace_pourtour !upleftx !uplefty !taille_case !l !h;
   trace_lab !upleftx !uplefty !taille_case !l !h mur_present;
   draw_help_input ();
-
   thread_fantome mur_present;
   pacman mur_present;
   ignore @@ Graphics.read_key ()
 ;;
 (***********************************************************************************************)
 (***********************************************************************************************)
-
+(*#############################################################################################*)
 (***********************************************************************************************)
 (***********************************************************************************************)
 
